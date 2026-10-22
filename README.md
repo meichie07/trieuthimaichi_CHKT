@@ -1,1 +1,0 @@
-# trieuthimaichi_CHKT
