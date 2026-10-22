@@ -12,9 +12,9 @@ class ApiService {
   static String? _customUrl;
 
   /// API endpoint for Web, Android emulator and physical devices.
-  /// Swagger documentation: https://wideshinytower7.conveyor.cloud/swagger/index.html
+  /// Swagger documentation: https://differentredapple17.conveyor.cloud/swagger/index.html
   /// Do not use the /swagger/index.html path for API requests.
-  static const String defaultBaseUrl = 'https://wideshinytower7.conveyor.cloud/api';
+  static const String defaultBaseUrl = 'https://differentredapple17.conveyor.cloud/';
 
   static String get baseUrl => _customUrl ?? defaultBaseUrl;
 
