@@ -250,7 +250,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           child: Icon(Icons.admin_panel_settings, color: Colors.white),
                         ),
                         title: Text(currentUser?.fullName ?? 'Quản trị viên', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Email: ${currentUser?.email ?? "admin@kidguard.com"}\nQuyền hạn: Toàn quyền quản trị Server API https://localhost:7048'),
+                        subtitle: Text('Email: ${currentUser?.email ?? "admin@kidguard.com"}\nQuyền hạn: Toàn quyền quản trị Server API ${ApiService.baseUrl}'),
                       ),
                     ),
                     const SizedBox(height: 16),

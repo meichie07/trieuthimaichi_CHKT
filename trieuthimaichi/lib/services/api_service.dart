@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,39 +8,48 @@ import '../models/app_rule_model.dart';
 import '../models/location_model.dart';
 import '../models/noise_log_model.dart';
 
-/// SSL Certificate Bypass for Dev API (`https://localhost:7048` / `https://10.0.2.2:7048` / `https://127.0.0.1:7048`)
-class DevHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-  }
-}
-
 class ApiService {
   static String? _customUrl;
 
-  /// Default API URL mapping:
-  /// - Physical Phone (via ADB reverse port forwarding): https://127.0.0.1:7048/api
-  /// - Android Emulator: https://10.0.2.2:7048/api
-  /// - Web / Windows Desktop: https://localhost:7048/api
-  static String get defaultBaseUrl {
-    if (kIsWeb) return 'https://localhost:7048/api';
-    if (Platform.isAndroid) return 'https://127.0.0.1:7048/api';
-    return 'https://localhost:7048/api';
-  }
+  /// API endpoint for Web, Android emulator and physical devices.
+  /// Swagger documentation: https://wideshinytower7.conveyor.cloud/swagger/index.html
+  /// Do not use the /swagger/index.html path for API requests.
+  static const String defaultBaseUrl = 'https://wideshinytower7.conveyor.cloud/api';
 
   static String get baseUrl => _customUrl ?? defaultBaseUrl;
 
   static Future<void> loadCustomUrl() async {
     final prefs = await SharedPreferences.getInstance();
-    _customUrl = prefs.getString('custom_api_url');
+    final savedUrl = prefs.getString('custom_api_url');
+    // Ignore old localhost settings saved by the previous version of the app.
+    final savedHost = Uri.tryParse(savedUrl ?? '')?.host.toLowerCase();
+    if (savedHost == 'localhost' ||
+        savedHost == '127.0.0.1' ||
+        savedHost == '10.0.2.2') {
+      _customUrl = null;
+      await prefs.remove('custom_api_url');
+    } else {
+      _customUrl = savedUrl == null || savedUrl.trim().isEmpty
+          ? null
+          : _normalizeApiUrl(savedUrl);
+    }
   }
 
   static Future<void> setCustomUrl(String url) async {
-    _customUrl = url.trim();
+    _customUrl = url.trim().isEmpty ? null : _normalizeApiUrl(url);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('custom_api_url', url.trim());
+    if (_customUrl == null) {
+      await prefs.remove('custom_api_url');
+    } else {
+      await prefs.setString('custom_api_url', _customUrl!);
+    }
+  }
+
+  static String _normalizeApiUrl(String url) {
+    var normalized = url.trim().replaceFirst(RegExp(r'/+$'), '');
+    normalized = normalized.replaceFirst(RegExp(r'/swagger/index\.html$'), '');
+    if (!normalized.endsWith('/api')) normalized = '$normalized/api';
+    return normalized;
   }
 
   /// Diagnostic connection test directly matching C# Controllers (`DeviceApi` & `Authenticate`)
@@ -70,7 +78,7 @@ class ApiService {
           'statusCode': response.statusCode,
           'latencyMs': duration,
           'url': targetUrl,
-          'message': '✅ ĐÃ KẾT NỐI THÀNH CÔNG ĐẾN WEB API! (Mã ${response.statusCode})\nServer C# Backend đang hoạt động trên port 7048 ($duration ms).',
+          'message': '✅ ĐÃ KẾT NỐI THÀNH CÔNG ĐẾN WEB API! (Mã ${response.statusCode})\nServer C# Backend đang phản hồi ($duration ms).',
         };
       } else {
         return {

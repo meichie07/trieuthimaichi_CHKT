@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'models/user_model.dart';
-import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboards/admin_dashboard.dart';
@@ -11,9 +9,6 @@ import 'screens/dashboards/child_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Bypass SSL Self-Signed Trust Anchor verification for local Web API dev (https://localhost:7048)
-  HttpOverrides.global = DevHttpOverrides();
 
   // Initialize persistent user session
   await AuthService.instance.initSession();
